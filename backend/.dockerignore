@@ -1,0 +1,44 @@
+# Virtual environment — never ship this, Cloud Run installs from requirements.txt
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Local credentials — Cloud Run uses ADC (Workload Identity), never credentials files
+credentials.json
+service-account.json
+*.json.key
+.env
+.env.*
+
+# Test files — not needed in production container
+test_*.py
+test_rash.png
+test_rash_real.png
+test_audio.m4a
+
+# Uploaded files from local dev sessions
+uploads/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Setup scripts (Windows-only, not needed in container)
+setup_phase1.bat
+setup_phase1.ps1
+
+# Logs
+*.log
