@@ -189,6 +189,7 @@ class FirebaseQueueManager:
             queue_entry = {
                 # Cross-reference back to `patients` collection
                 "patient_id":          firestore_patient_id,   # ← THE LINK
+                "name":                patient_card.get("name", "Unknown Patient"),  # ← ADD PATIENT NAME
                 "chief_complaint":     patient_card.get("chief_complaint", ""),
                 "symptoms":            patient_card.get("symptoms", []),
                 "triage_color":        patient_card.get("triage_color", "Green"),

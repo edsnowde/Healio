@@ -15,7 +15,7 @@ import {
   Building2,
   User,
 } from 'lucide-react'
-import { submitTriage, type TriageResponse } from '@/lib/api'
+import { submitTriage, submitMultimodalTriage, type TriageResponse } from '@/lib/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +25,7 @@ export interface PatientFormData {
   gender: string
   phone: string
   symptoms: string
+  audioLanguage: string  // NEW: Kannada/Hindi/English for voice input
 }
 
 type FieldName = keyof PatientFormData
@@ -62,11 +63,9 @@ const FIELD_CONSTRAINTS: Partial<Record<FieldName, FieldConstraint>> = {
 }
 
 // ─── Speech Abstraction Layer ─────────────────────────────────────────────────
-// • Change RECOGNITION_LANG = 'kn-IN' for Kannada, 'hi-IN' for Hindi.
+// • Language is now DYNAMIC — uses the selected audioLanguage from form state
 // • Replace createRecognition() body entirely to swap in Google Cloud Speech-to-Text.
 //   The onInterim / onFinal / onEnd / onError contract stays the same — no UI changes needed.
-
-const RECOGNITION_LANG = 'en-US'
 
 interface RecognitionCallbacks {
   onInterim: (text: string) => void
@@ -75,7 +74,7 @@ interface RecognitionCallbacks {
   onError:   (err: string)  => void
 }
 
-function createRecognition(callbacks: RecognitionCallbacks) {
+function createRecognition(callbacks: RecognitionCallbacks, lang: string = 'en-US') {
   const SR =
     (window as any).SpeechRecognition ||
     (window as any).webkitSpeechRecognition
@@ -86,7 +85,7 @@ function createRecognition(callbacks: RecognitionCallbacks) {
   }
 
   const rec = new SR()
-  rec.lang           = RECOGNITION_LANG
+  rec.lang           = lang  // ← Now uses passed language parameter!
   rec.continuous     = true
   rec.interimResults = true
 
@@ -140,7 +139,7 @@ function coerceField(field: FieldName, raw: string): PatientFormData[FieldName] 
 export default function PatientForm() {
 
   const [formData, setFormData] = useState<PatientFormData>({
-    name: '', age: 0, gender: '', phone: '', symptoms: '',
+    name: '', age: 0, gender: '', phone: '', symptoms: '', audioLanguage: 'kn-IN',
   })
 
   // Triage result from the backend after successful submission
@@ -159,11 +158,17 @@ export default function PatientForm() {
   const [extractedSymptoms, setExtractedSymptoms] = useState<string[]>([])
   const [showExtracted,     setShowExtracted]     = useState(false)
   const [waveformBars,      setWaveformBars]      = useState(Array(20).fill(0.3))
+  const [uploadedImages,    setUploadedImages]    = useState<File[]>([])
+  const [uploadingImages,   setUploadingImages]   = useState(false)
+  const [uploadedVideos,    setUploadedVideos]    = useState<File[]>([])
 
   const recognitionRef = useRef<any>(null)
   const silenceTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
   const animationRef   = useRef<number | null>(null)
   const accFinalRef    = useRef('')   // accumulates final transcript chunks within one session
+  const cameraInputRef = useRef<HTMLInputElement>(null)  // for camera capture on mobile
+  const galleryInputRef = useRef<HTMLInputElement>(null) // for gallery/file selection
+  const videoInputRef = useRef<HTMLInputElement>(null)   // for video upload
 
   // ── Check browser support on mount ──────────────────────────────────────────
   useEffect(() => {
@@ -271,12 +276,12 @@ export default function PatientForm() {
         setActiveField(null)
         setInterimText('')
       },
-    })
+    }, formData.audioLanguage)  // ← PASS SELECTED LANGUAGE HERE!
 
     if (!rec) return
     recognitionRef.current = rec
     rec.start()
-  }, [])
+  }, [formData.audioLanguage])  // ← ADD LANGUAGE TO DEPENDENCY ARRAY
 
   // ── Manual text / select change (non-locked fields only) ────────────────────
 
@@ -299,34 +304,111 @@ export default function PatientForm() {
     return true
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // ── Image upload handler ───────────────────────────────────────────────────
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      setUploadedImages(prev => [...prev, ...files])
+    }
+  }
+
+  // ── Remove image from upload list ──────────────────────────────────────────
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // ── Handle video upload ────────────────────────────────────────────────
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      setUploadedVideos(prev => [...prev, ...files])
+    }
+  }
+
+  // ── Remove video from upload list ──────────────────────────────────────
+  const removeVideo = (index: number) => {
+    setUploadedVideos(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // ── Unified Submit Handler (intelligently routes text-only or multimodal) ────────────────────
+
+  const handleSubmitForTriage = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormError('')
     setTriageResult(null)
+
+    // Validate required fields
     if (!validateForm()) return
-    setIsLoading(true)
 
-    try {
-      // Build the text payload exactly as the backend expects:
-      // "text" is the free-form symptom description; name is passed separately
-      const text = [
-        formData.symptoms,
-        formData.name ? `my name is ${formData.name}` : '',
-        formData.age  ? `I am ${formData.age} years old` : '',
-        formData.gender ? `gender ${formData.gender}` : '',
-      ].filter(Boolean).join('. ')
+    const hasMedia = uploadedImages.length > 0 || uploadedVideos.length > 0
 
-      const result = await submitTriage({ text, name: formData.name || undefined })
-      setTriageResult(result)
+    // Build the text payload
+    const text = [
+      formData.symptoms,
+      formData.name ? `my name is ${formData.name}` : '',
+      formData.age  ? `I am ${formData.age} years old` : '',
+      formData.gender ? `gender ${formData.gender}` : '',
+    ].filter(Boolean).join('. ')
 
-      // Scroll the result card into view
-      setTimeout(() => {
-        document.getElementById('triage-result-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-    } catch (err: any) {
-      setFormError(err?.message || 'Submission failed. Is the backend running on port 8080?')
-    } finally {
-      setIsLoading(false)
+    // DEBUG: Log what's being sent
+    console.log('🔍 DEBUG - Submitting form with:')
+    console.log('  formData.name:', formData.name)
+    console.log('  formData.symptoms:', formData.symptoms)
+    console.log('  formData.age:', formData.age)
+    console.log('  formData.gender:', formData.gender)
+    console.log('  text:', text)
+    console.log('  hasMedia:', hasMedia)
+
+    if (hasMedia) {
+      // ── Route to Multimodal endpoint (images/videos with text) ──────────────
+      setUploadingImages(true)
+      try {
+        console.log('📤 Sending to /analyze/with-multimodal with:')
+        console.log('  text:', text)
+        console.log('  name:', formData.name)
+        console.log('  images:', uploadedImages.length)
+        console.log('  videos:', uploadedVideos.length)
+        const result = await submitMultimodalTriage({
+          text,
+          name: formData.name || undefined,
+          images: uploadedImages,
+          videos: uploadedVideos.length > 0 ? uploadedVideos : undefined,
+        })
+        setTriageResult(result as unknown as TriageResponse)
+        setUploadedImages([])
+        setUploadedVideos([])
+        setTimeout(() => {
+          document.getElementById('triage-result-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+      } catch (err: any) {
+        setFormError(err?.message || 'Media submission failed. Check backend logs.')
+      } finally {
+        setUploadingImages(false)
+      }
+    } else {
+      // ── Route to Text-only endpoint (no images/videos) ─────────────────────
+      setIsLoading(true)
+      try {
+        console.log('📤 Sending to /triage with:')
+        console.log('  text:', text)
+        console.log('  name:', formData.name)
+        console.log('  audio_language:', formData.audioLanguage)
+        const result = await submitTriage({ 
+          text, 
+          name: formData.name || undefined,
+          audio_language: formData.audioLanguage
+        })
+        setTriageResult(result)
+        setTimeout(() => {
+          document.getElementById('triage-result-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+      } catch (err: any) {
+        setFormError(err?.message || 'Submission failed. Is the backend running on port 8080?')
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -466,7 +548,7 @@ export default function PatientForm() {
           {/* ── Form Card ─────────────────────────────────────────────────────── */}
           <div>
             <form
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmitForTriage}
               className="
                 bg-white/85 backdrop-blur-2xl rounded-[30px]
                 shadow-2xl p-10 space-y-8 border border-white/60
@@ -590,6 +672,35 @@ export default function PatientForm() {
                 <div className="absolute top-4 right-4 flex items-center gap-2 bg-emerald-600 text-white px-4 py-1.5 rounded-full text-xs font-semibold">
                   <Volume2 size={14} />
                   Primary Intake
+                </div>
+
+                {/* Language selector - NEW! */}
+                <div className="mb-6 pb-6 border-b border-emerald-200">
+                  <h4 className="text-sm font-bold text-gray-700 mb-3">Voice Language</h4>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { code: 'kn-IN', label: '🇮🇳 Kannada', flag: '🔤' },
+                      { code: 'hi-IN', label: '🇮🇳 Hindi', flag: '🔤' },
+                      { code: 'en-IN', label: '🇮🇳 English', flag: '🔤' }
+                    ].map(({ code, label }) => (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, audioLanguage: code }))}
+                        className={`
+                          px-4 py-2 rounded-lg font-semibold text-sm transition
+                          border-2
+                          ${formData.audioLanguage === code
+                            ? 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-emerald-300'
+                          }
+                        `}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Select language before recording voice input</p>
                 </div>
 
                 <div className="mb-6">
@@ -716,17 +827,151 @@ export default function PatientForm() {
                 </h3>
                 <div className="grid md:grid-cols-2 gap-5">
 
-                  {/* Upload */}
-                  <div className="
-                    border-2 border-dashed border-emerald-300 rounded-2xl
-                    p-8 text-center
-                    hover:border-emerald-500 hover:bg-emerald-50/30
-                    transition bg-white/60 backdrop-blur-sm
-                  ">
-                    <Upload className="mx-auto mb-4 text-emerald-600" size={32} />
-                    <p className="font-bold text-gray-900">Upload Medical Images</p>
-                    <p className="text-sm text-gray-600 mt-1">Gemini Vision Intake</p>
-                    <p className="text-xs text-gray-500 mt-2">Prescriptions, rash images, wounds, scans</p>
+                  {/* Upload — FIXED: Now with separate camera & gallery options */}
+                  <div className="space-y-4">
+                    {/* Camera input (hidden) */}
+                    <input
+                      ref={cameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      aria-label="Take photo with camera"
+                    />
+                    
+                    {/* Gallery input (hidden) */}
+                    <input
+                      ref={galleryInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      aria-label="Upload images from gallery"
+                    />
+
+                    {/* Camera button */}
+                    <button
+                      type="button"
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="
+                        w-full border-2 border-dashed border-blue-300 rounded-2xl
+                        p-6 text-center
+                        hover:border-blue-500 hover:bg-blue-50/30
+                        transition bg-white/60 backdrop-blur-sm
+                        cursor-pointer
+                      "
+                    >
+                      <p className="text-3xl mb-2">📷</p>
+                      <p className="font-bold text-gray-900">Take Photo with Camera</p>
+                      <p className="text-xs text-gray-500 mt-1">Capture medical images in real-time</p>
+                    </button>
+
+                    {/* Gallery button */}
+                    <button
+                      type="button"
+                      onClick={() => galleryInputRef.current?.click()}
+                      className="
+                        w-full border-2 border-dashed border-emerald-300 rounded-2xl
+                        p-6 text-center
+                        hover:border-emerald-500 hover:bg-emerald-50/30
+                        transition bg-white/60 backdrop-blur-sm
+                        cursor-pointer
+                      "
+                    >
+                      <p className="text-3xl mb-2">🖼️</p>
+                      <p className="font-bold text-gray-900">Upload from Gallery</p>
+                      <p className="text-xs text-gray-500 mt-1">Select existing images</p>
+                    </button>
+
+                    {/* Video input (hidden) - NEW! */}
+                    <input
+                      ref={videoInputRef}
+                      type="file"
+                      multiple
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      className="hidden"
+                      aria-label="Upload clinical videos"
+                    />
+
+                    {/* Video upload button - NEW! */}
+                    <button
+                      type="button"
+                      onClick={() => videoInputRef.current?.click()}
+                      className="
+                        w-full border-2 border-dashed border-red-300 rounded-2xl
+                        p-6 text-center
+                        hover:border-red-500 hover:bg-red-50/30
+                        transition bg-white/60 backdrop-blur-sm
+                        cursor-pointer
+                      "
+                    >
+                      <p className="text-3xl mb-2">🎥</p>
+                      <p className="font-bold text-gray-900">Upload Clinical Videos</p>
+                      <p className="text-xs text-gray-500 mt-1">Add video evidence of symptoms</p>
+                    </button>
+
+                    {/* Show uploaded image previews */}
+                    {uploadedImages.length > 0 && (
+                      <div className="mt-4 space-y-3">
+                        <p className="text-sm font-semibold text-emerald-700">
+                          📸 {uploadedImages.length} image(s) selected:
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {uploadedImages.map((file, idx) => (
+                            <div
+                              key={idx}
+                              className="
+                                relative bg-white border border-emerald-200 rounded-lg p-2
+                                text-xs text-gray-700 font-semibold truncate
+                                flex items-center justify-between gap-2
+                              "
+                            >
+                              <span className="truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeImage(idx)}
+                                className="text-red-500 hover:text-red-700 shrink-0"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Show uploaded video previews - NEW! */}
+                    {uploadedVideos.length > 0 && (
+                      <div className="mt-4 space-y-3">
+                        <p className="text-sm font-semibold text-red-700">
+                          🎥 {uploadedVideos.length} video(s) selected:
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {uploadedVideos.map((file, idx) => (
+                            <div
+                              key={idx}
+                              className="
+                                relative bg-white border border-red-200 rounded-lg p-2
+                                text-xs text-gray-700 font-semibold truncate
+                                flex items-center justify-between gap-2
+                              "
+                            >
+                              <span className="truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeVideo(idx)}
+                                className="text-red-500 hover:text-red-700 shrink-0"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Text backup — auto-filled by symptom voice */}
@@ -782,7 +1027,7 @@ export default function PatientForm() {
               {/* ── Submit ───────────────────────────────────────────────────── */}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || uploadingImages}
                 className="
                   w-full py-4 rounded-2xl
                   bg-emerald-600 hover:bg-emerald-700
@@ -790,7 +1035,11 @@ export default function PatientForm() {
                   transition disabled:opacity-60
                 "
               >
-                {isLoading ? 'Agents Evaluating…' : 'Submit For Triage'}
+                {isLoading || uploadingImages 
+                  ? (uploadedImages.length > 0 || uploadedVideos.length > 0
+                      ? '🔄 Analyzing with Gemini Vision…'
+                      : '🤖 Agents Evaluating…')
+                  : 'Submit For Triage'}
               </button>
 
               <p className="text-center text-xs text-gray-500">
@@ -887,7 +1136,7 @@ export default function PatientForm() {
                     type="button"
                     onClick={() => {
                       setTriageResult(null)
-                      setFormData({ name: '', age: 0, gender: '', phone: '', symptoms: '' })
+                      setFormData({ name: '', age: 0, gender: '', phone: '', symptoms: '', audioLanguage: 'kn-IN' })
                       setLockedFields(new Set())
                     }}
                     className="px-6 py-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl transition"
@@ -904,4 +1153,4 @@ export default function PatientForm() {
       </div>
     </div>
   )
-}
+}

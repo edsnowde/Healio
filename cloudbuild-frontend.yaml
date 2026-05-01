@@ -1,0 +1,25 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_API_URL=https://healio-backend-322299516577.us-central1.run.app'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/healio-494416/cloud-run-source-deploy/healio-frontend:latest'
+      - '-f'
+      - 'frontend/Dockerfile'
+      - 'frontend/'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/healio-494416/cloud-run-source-deploy/healio-frontend:latest'
+
+images:
+  - 'us-central1-docker.pkg.dev/healio-494416/cloud-run-source-deploy/healio-frontend:latest'
+
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1800s'

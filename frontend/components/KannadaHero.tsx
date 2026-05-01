@@ -109,7 +109,7 @@ rounded-full blur-3xl
 {/* Animated Cubes */}
 
 <motion.div
-{...float1}
+{...(float1 as any)}
 className="
 absolute
 right-[12%]
@@ -124,7 +124,7 @@ shadow-2xl
 
 
 <motion.div
-{...float2}
+{...(float2 as any)}
 className="
 absolute
 right-[28%]
@@ -139,7 +139,7 @@ shadow-xl
 
 
 <motion.div
-{...float3}
+{...(float3 as any)}
 className="
 absolute
 right-[10%]
@@ -154,7 +154,7 @@ shadow-2xl
 
 
 <motion.div
-{...float4}
+{...(float4 as any)}
 className="
 absolute
 right-[26%]
@@ -170,7 +170,7 @@ shadow-xl
 
 
 <motion.div
-{...float5}
+{...(float5 as any)}
 className="
 absolute
 right-[8%]

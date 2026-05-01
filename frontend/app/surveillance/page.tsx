@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import {
   AlertTriangle, TrendingUp, Clock, Activity,
-  Users, AlertCircle, CheckCircle2, X, Wifi, WifiOff, RefreshCw,
+  Users, AlertCircle, CheckCircle2, X, Wifi, WifiOff, RefreshCw, Map as MapIcon,
 } from 'lucide-react'
 import type { ClusterDoc, SurveillanceDoc } from '@/lib/api'
+import { useGoogleMapsLoaded } from '@/components/GoogleMapsProvider'
+import ClusterMap from '@/components/ClusterMap'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +34,9 @@ export default function SurveillanceDashboard() {
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportStatus,    setReportStatus]    = useState<'idle' | 'submitted' | 'success'>('idle')
   const [activeCluster,   setActiveCluster]   = useState<ClusterDoc | null>(null)
+
+  // Google Maps API
+  const { isLoaded: mapsLoaded } = useGoogleMapsLoaded()
 
   // ── Live: detected_clusters/ ─────────────────────────────────────────────────
   useEffect(() => {
@@ -227,6 +232,73 @@ export default function SurveillanceDashboard() {
                   >
                     <AlertCircle size={20} /> Report to PHC
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* GEOGRAPHIC MAP — shows clusters by location/area */}
+          {!loading && clusters.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <MapIcon size={24} className="text-blue-600" />
+                Outbreak Cluster Locations (Bengaluru)
+              </h3>
+              
+              {/* Google Maps Container */}
+              <div className="rounded-xl border-2 border-blue-200 overflow-hidden" style={{ height: '500px' }}>
+                {mapsLoaded && clusters.length > 0 ? (
+                  <ClusterMap clusters={clusters} isLoaded={mapsLoaded} />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <p className="text-gray-600">Loading map...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Map Legend */}
+              <div className="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-3">Map Legend</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-red-600 border-2 border-red-900"></div>
+                    <span className="text-gray-700"><span className="font-bold">🚨 Red Marker:</span> High severity (5+ patients) - Requires action</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-orange-500 border-2 border-orange-700"></div>
+                    <span className="text-gray-700"><span className="font-bold">⚠️ Orange Marker:</span> Medium severity (3-4 patients)</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 mt-3">
+                  Click on markers to view cluster details, symptoms, and confidence scores.
+                </p>
+              </div>
+
+              {/* Cluster Details List */}
+              <div className="mt-6">
+                <h4 className="font-bold text-gray-900 mb-3">All Clusters ({clusters.length})</h4>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {clusters.map(cluster => (
+                    <div key={cluster.id} className={`p-3 rounded-lg border-l-4 text-sm ${
+                      cluster.action_required
+                        ? 'bg-red-50 border-red-500 hover:bg-red-100'
+                        : 'bg-orange-50 border-orange-500 hover:bg-orange-100'
+                    } transition cursor-pointer`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-gray-900">
+                          📍 {cluster.patient_count} patients {cluster.location ? `in ${cluster.location}` : ''}
+                        </span>
+                        <span className={`text-xs font-bold px-2 py-1 rounded ${
+                          cluster.action_required
+                            ? 'bg-red-200 text-red-800'
+                            : 'bg-orange-200 text-orange-800'
+                        }`}>{Math.round((cluster.confidence || 0) * 100)}%</span>
+                      </div>
+                      <p className="text-gray-600 text-xs mt-1 line-clamp-2">
+                        {(cluster.symptoms || []).join(', ') || 'No symptoms recorded'}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

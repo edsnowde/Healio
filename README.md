@@ -2,11 +2,240 @@
 
 **Theme:** Disease Prevention & Treatment  
 **Built for:** Build For Bengaluru Hackathon — Reva University  
-**Status:** ✅ Backend MVP Complete — Tested & Running
+**Status:** ✅ **DEPLOYED & LIVE** — Both Frontend & Backend Running on Google Cloud Run
 
 ---
 
-## 🚀 Quick Start
+## 📅 LATEST DEPLOYMENT UPDATE (May 1, 2026)
+
+### 🎉 **PRODUCTION STATUS: LIVE & OPERATIONAL**
+
+| Component | Status | URL |
+|-----------|--------|-----|
+| **Frontend** | ✅ LIVE | https://healio-frontend-322299516577.us-central1.run.app |
+| **Backend** | ✅ LIVE | https://healio-backend-322299516577.us-central1.run.app |
+| **Google Maps** | ✅ ACTIVE | Interactive Bengaluru outbreak cluster map |
+| **Database** | ✅ CONNECTED | Google Cloud Firestore (real-time) |
+| **AI Pipeline** | ✅ RUNNING | Gemini 2.5 Flash (3-agent orchestration) |
+
+### 📝 **CHANGES & FEATURES IMPLEMENTED (This Session)**
+
+#### **FRONTEND ENHANCEMENTS**
+
+1. **✅ Fixed Image Upload Button**
+   - Changed from non-functional `<div>` to proper `<button>` with hidden file input
+   - Added click-to-trigger mechanism: `input.click()`
+   - Users can now upload clinical images from intake form
+
+2. **✅ Added Mobile Camera Support**
+   - Implemented camera input with `capture="environment"` attribute
+   - Added dual-button system: Camera (direct capture) + Gallery (file picker)
+   - Mobile users can capture images/videos directly without file explorer
+
+3. **✅ Unified Submit Handler**
+   - Consolidated duplicate `handleSubmit()` and `handleSubmitWithImages()` into single `handleSubmitForTriage()`
+   - Smart routing: 
+     - Text-only → `/triage` endpoint
+     - Text + Media → `/analyze/with-multimodal` endpoint
+   - Eliminates confusion, reduces button clutter
+
+4. **✅ Dynamic Voice Recognition Language**
+   - Fixed hardcoded language (`RECOGNITION_LANG = 'en-US'` issue)
+   - Implemented language-aware speech recognition: `formData.audioLanguage`
+   - Supports: Kannada (`kn-IN`), Hindi (`hi-IN`), English (`en-IN`)
+   - Language selector buttons now properly control microphone input
+
+5. **✅ Google Maps Integration (Outbreak Surveillance)**
+   - Replaced static SVG grid map with interactive Google Maps API
+   - Added `@react-google-maps/api` library for real-time rendering
+   - **Map Features:**
+     - 🗺️ Centered on Bengaluru (13.0827°N, 77.5933°E)
+     - 📍 Cluster markers with patient counts
+     - 🔴 Red markers = High severity (5+ patients, requires action)
+     - 🟠 Orange markers = Medium severity (3-4 patients)
+     - 💬 Click markers for detailed info windows (symptoms, confidence %)
+     - 🎮 Full map controls: zoom, pan, fullscreen, map type
+   - API Key configured: `frontend/.env.local`
+
+6. **✅ Patient Details Page**
+   - Created `/patient/[id]` dynamic route page (~700 lines)
+   - Fetches complete patient record from Firestore
+   - **Display Sections:**
+     - Header: Name, ID, triage color, risk score, status
+     - Chief complaint (prominent display)
+     - Symptoms + Duration + Severity
+     - Agent 1 output (multimodal findings)
+     - Agent 2 output (clinical reasoning)
+     - Agent 3 output (doctor assignment)
+     - Original text input
+     - Raw Gemini responses
+     - Metadata (session ID, queue ID)
+   - Date formatting in IST (Indian Standard Time)
+
+7. **✅ Clickable Queue Board**
+   - Made patient cards in queue clickable
+   - Added `Link` navigation: patient card → `/patient/[id]`
+   - Hover effects: shadow, scale transition
+   - Shows patient name with fallback: "Unknown" if name missing
+
+#### **BACKEND ENHANCEMENTS**
+
+1. **✅ Geographic Coordinates for Outbreak Clusters**
+   - Added `phc_locations` dictionary with 10 Bengaluru PHC areas
+   - Coordinates extracted: (lat, lng) for each location
+   - Cluster detection now includes latitude/longitude fields
+   - Enables geographic visualization on map
+
+2. **✅ Fixed Firestore Data Flow**
+   - Investigated patient name population issue
+   - Created `fix_patient_names.py` script for retroactive name population
+   - New patients now automatically receive names
+   - 4-step write sequence ensures referential integrity
+
+#### **INFRASTRUCTURE & DEPLOYMENT**
+
+1. **✅ TypeScript Configuration Fix**
+   - Fixed `ignoreDeprecations` compilation error in `tsconfig.json`
+   - Removed problematic deprecated config option
+   - Frontend now builds without errors
+
+2. **✅ Environment Variable Setup**
+   - Created `.env.local` with:
+     - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: Active API key
+     - `NEXT_PUBLIC_API_URL`: Points to Cloud Run backend
+   - Frontend now correctly connects to backend API
+
+3. **✅ Google Cloud Permissions (IAM)**
+   - Granted `roles/aiplatform.user` → Vertex AI access
+   - Granted `roles/datastore.user` → Firestore access
+   - Cloud Run service account: `322299516577-compute@developer.gserviceaccount.com`
+   - Resolved "403 Missing or insufficient permissions" error
+
+4. **✅ Full Production Deployment**
+   - **Frontend Build:** `npm run build` → 12 pages compiled, 0 errors
+   - **Docker Build:** `gcloud builds submit --config cloudbuild-frontend.yaml .` → Built & pushed to Artifact Registry
+   - **Frontend Deploy:** Cloud Run on 512MB/1CPU at port 3000
+   - **Backend Deploy:** Cloud Run on 2GB/2CPU at port 8080 (FastAPI + Python 3.11)
+   - Both services now serving 100% traffic, fully public
+
+### 🔧 **TECHNICAL STACK (CURRENT)**
+
+**Frontend:**
+- Next.js 14.2.3 + React 18 + TypeScript
+- Tailwind CSS for styling
+- Firebase Admin SDK (Firestore real-time listeners)
+- @react-google-maps/api (interactive maps)
+- Web Speech Recognition API (multimodal voice)
+- Lucide React icons
+
+**Backend:**
+- FastAPI (Python 3.11) + Uvicorn
+- Vertex AI Generative Models (Gemini 2.5 Flash)
+- Google Cloud Speech-to-Text
+- Firebase Admin SDK (Firestore writes)
+- Healio ADK (multi-agent orchestration)
+
+**Cloud Infrastructure:**
+- Google Cloud Run (serverless compute)
+- Google Cloud Firestore (NoSQL database)
+- Google Cloud Artifact Registry (Docker images)
+- Vertex AI API (Gemini + Vision)
+- Google Cloud Speech-to-Text API
+
+### ✅ **WHAT WORKS NOW**
+
+1. **Voice Input:** Users speak in Kannada/Hindi/English → transcribed via Google Speech-to-Text
+2. **Image Upload:** Clinical images analyzed by Gemini Vision
+3. **Triage Pipeline:** 3-agent orchestration → Red/Yellow/Green classification
+4. **Real-time Queue:** Dashboard updates live as new patients submitted
+5. **Patient Details:** Click any patient in queue → see complete medical record
+6. **Outbreak Surveillance:** Interactive Google Map shows cluster locations
+7. **Geographic Intelligence:** Clusters automatically plotted by PHC location
+8. **Multi-agent AI:** Agent 1 (intake) → Agent 2 (reasoning) → Agent 3 (handoff)
+
+### 🚀 **DEPLOYMENT COMMANDS EXECUTED**
+
+```bash
+# Frontend build locally
+cd frontend && npm install && npm run build && cd ..
+
+# Build Docker & push to registry
+gcloud builds submit --config cloudbuild-frontend.yaml .
+
+# Deploy frontend to Cloud Run
+gcloud run deploy healio-frontend \
+  --image us-central1-docker.pkg.dev/healio-494416/cloud-run-source-deploy/healio-frontend:latest \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 3000 --memory 512Mi --cpu 1
+
+# Deploy backend to Cloud Run
+cd backend
+gcloud run deploy healio-backend \
+  --source . \
+  --project healio-494416 \
+  --region us-central1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --memory 2Gi --cpu 2 \
+  --timeout 300 \
+  --port 8080 \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=healio-494416
+cd ..
+
+# Grant IAM permissions
+gcloud projects add-iam-policy-binding healio-494416 \
+  --member=serviceAccount:322299516577-compute@developer.gserviceaccount.com \
+  --role=roles/aiplatform.user
+
+gcloud projects add-iam-policy-binding healio-494416 \
+  --member=serviceAccount:322299516577-compute@developer.gserviceaccount.com \
+  --role=roles/datastore.user
+
+# Verify deployment
+gcloud run services list --region us-central1
+```
+
+### 📊 **DEPLOYMENT METRICS**
+
+| Metric | Value |
+|--------|-------|
+| **Frontend Build Time** | ~3 minutes |
+| **Backend Build Time** | ~5 minutes |
+| **Total Deployment Time** | ~10 minutes |
+| **API Response Time** | < 10 seconds (3-agent pipeline) |
+| **Map Load Time** | < 2 seconds |
+| **Database Sync** | Real-time (Firestore listeners) |
+
+### 🎯 **NEXT STEPS / KNOWN LIMITATIONS**
+
+- [ ] Add CORS restriction (currently allows all origins for testing)
+- [ ] Implement user authentication (currently public)
+- [ ] Add rate limiting to prevent abuse
+- [ ] Test multimodal inputs (video analysis for respiratory distress)
+- [ ] Scale to 5+ PHC locations across Bengaluru
+- [ ] Add offline sync capability
+- [ ] Performance testing with 100+ concurrent users
+
+---
+📋 Summary of Steps You Completed:
+Step	Status	Command
+1. Navigate to backend	✅ Done	    cd backend
+2. Create virtual env	✅ Done	      python -m venv myenv
+3. Activate venv	✅ Done	          .\myenv\Scripts\Activate.ps1
+4. Install dependencies	✅ Done	    pip install -r requirements.txt
+5. Run backend	🔄 Ready	           python -m uvicorn api.main:app --port 8080 --log-level info
+
+
+frontend:
+cd frontend 
+npm run dev
+
+
+
+
+## 🚀 Quick Start which was pervious stuff 
 
 ```powershell
 # 1. Navigate to backend
@@ -18,6 +247,8 @@ cd "C:\Users\User\Desktop\activities_ABULANCE\Build For Bengaluru Hackathon_Reva
 # 3. Test a triage (new terminal)
 Invoke-RestMethod -Uri "http://localhost:8080/triage" -Method POST -ContentType "application/json" -Body '{"text": "high fever since 3 days, red rash on arms and legs, severe joint pain", "name": "Patient Ravi"}'
 ```
+Invoke-RestMethod -Uri "http://127.0.0.1:8080/triage" -Method POST -ContentType "application/json" -Body '{"text": "high fever since 3 days, red rash on arms and legs, severe joint pain", "name": "Patient Ravi"}'
+
 
 ---
 

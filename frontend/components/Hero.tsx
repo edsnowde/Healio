@@ -15,7 +15,7 @@ rotate:[12,18,12]
 },
 transition:{
 duration:4,
-repeat:Infinity,
+repeat:Infinity as any,
 ease:"easeInOut"
 }
 }
@@ -27,7 +27,7 @@ y:[0,-10,0]
 },
 transition:{
 duration:4,
-repeat:Infinity,
+repeat:Infinity as any,
 ease:"easeInOut"
 }
 }
@@ -39,7 +39,7 @@ rotate:[6,-4,6]
 },
 transition:{
 duration:4,
-repeat:Infinity,
+repeat:Infinity as any,
 ease:"easeInOut"
 }
 }
@@ -51,7 +51,7 @@ y:[0,10,0]
 },
 transition:{
 duration:4,
-repeat:Infinity,
+repeat:Infinity as any,
 ease:"easeInOut"
 }
 }
@@ -63,7 +63,7 @@ x:[0,8,0]
 },
 transition:{
 duration:4,
-repeat:Infinity,
+repeat:Infinity as any,
 ease:"easeInOut"
 }
 }
@@ -110,7 +110,7 @@ rounded-full blur-3xl
 {/* Animated Cubes */}
 
 <motion.div
-{...float1}
+{...(float1 as any)}
 className="
 absolute
 right-[12%]
@@ -125,7 +125,7 @@ shadow-2xl
 
 
 <motion.div
-{...float2}
+{...(float2 as any)}
 className="
 absolute
 right-[28%]
@@ -140,7 +140,7 @@ shadow-xl
 
 
 <motion.div
-{...float3}
+{...(float3 as any)}
 className="
 absolute
 right-[10%]
@@ -155,7 +155,7 @@ shadow-2xl
 
 
 <motion.div
-{...float4}
+{...(float4 as any)}
 className="
 absolute
 right-[26%]
@@ -171,7 +171,7 @@ shadow-xl
 
 
 <motion.div
-{...float5}
+{...(float5 as any)}
 className="
 absolute
 right-[8%]

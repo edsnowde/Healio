@@ -1,14 +1,11 @@
-# Healio Backend — Minimal Testing Requirements
-# Only core FastAPI dependencies
-# Add others once API starts successfully
+# Healio Backend — Complete Requirements
 
+# Web framework
 fastapi>=0.100.0
 uvicorn[standard]>=0.24.0
 python-multipart>=0.0.6
 pydantic>=2.0.0
-
-
-############below other change ok 
+pydantic-settings>=2.0.0
 
 # File handling (async)
 aiofiles>=23.0.0
@@ -25,4 +22,3 @@ google-cloud-firestore>=2.13.0
 
 # Google Auth (Application Default Credentials)
 google-auth>=2.23.0
-

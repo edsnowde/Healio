@@ -1,16 +1,20 @@
+import Link from 'next/link'
 import { AlertCircle, CheckCircle, AlertTriangle, Clock, Building2 } from 'lucide-react'
 
 export interface QueuePatient {
   id: string
+  patient_id: string                  // Reference to patients/{patient_id}
+  name?: string                       // Patient name
   chief_complaint: string
   symptoms: string[]
   triage_color: 'Red' | 'Yellow' | 'Green'
-  risk_score: number           // 0.0–1.0 from Firestore
+  risk_score: number                  // 0.0–1.0 from Firestore
   assigned_doctor: string
   assigned_department: string
   status: string
   timestamp: string
   requires_anm_confirmation: boolean
+  urgent_flag?: boolean
 }
 
 interface QueueBoardProps {
@@ -75,10 +79,14 @@ export default function QueueBoard({ patients, onStatusChange }: QueueBoardProps
 
       <div className="space-y-3">
         {sorted.map((patient, idx) => (
-          <div
+          <Link
             key={patient.id}
-            className={`${getPriorityBg(patient.triage_color)} rounded-lg p-4 transition-all hover:shadow-md`}
+            href={`/patient/${patient.patient_id}`}
+            className="block"
           >
+            <div
+              className={`${getPriorityBg(patient.triage_color)} rounded-lg p-4 transition-all hover:shadow-md hover:scale-102 cursor-pointer`}
+            >
             <div className="flex items-start justify-between gap-4 flex-wrap">
 
               {/* Queue number + info */}
@@ -88,6 +96,14 @@ export default function QueueBoard({ patients, onStatusChange }: QueueBoardProps
                 </div>
 
                 <div className="flex-1 min-w-0">
+                  {/* Patient name and ID row - NEW! */}
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="font-bold text-gray-900">👤 {patient.name || 'Unknown'}</span>
+                    {patient.patient_id && (
+                      <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-mono">ID: {patient.patient_id.slice(0, 8)}</span>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     {getPriorityIcon(patient.triage_color)}
                     <h3 className="font-bold text-gray-900 truncate">{patient.chief_complaint}</h3>
@@ -152,7 +168,8 @@ export default function QueueBoard({ patients, onStatusChange }: QueueBoardProps
               </div>
 
             </div>
-          </div>
+            </div>
+          </Link>
         ))}
       </div>
 

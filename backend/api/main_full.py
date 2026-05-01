@@ -330,6 +330,7 @@ async def analyze_with_multimodal(
     
     Input:
         - text_input: Symptom description
+        - name: Patient name
         - images: Clinical images (rash, wounds, swelling, etc.)
         - videos: Clinical videos (breathing patterns, movement, etc.)
     
@@ -337,14 +338,6 @@ async def analyze_with_multimodal(
         Enriched patient card with multimodal clinical findings
     """
     try:
-        logger.info("=" * 80)
-        logger.info("📥 [MULTIMODAL] REQUEST RECEIVED")
-        logger.info(f"   text_input : '{text_input[:80] if text_input else '(empty)'}'")
-        logger.info(f"   name       : '{name}'")
-        logger.info(f"   images     : {len(images) if images else 0}")
-        logger.info(f"   videos     : {len(videos) if videos else 0}")
-        logger.info("=" * 80)
-        
         logger.info("Processing multimodal analysis")
         
         image_paths = []
@@ -529,14 +522,6 @@ async def triage_simple(request: TriageRequest, background_tasks: BackgroundTask
     Dynamic routing based on Agent 2's triage decision (Red/Yellow/Green).
     """
     try:
-        logger.info("=" * 80)
-        logger.info("📥 [TRIAGE] REQUEST RECEIVED")
-        logger.info(f"   name              : '{request.name}'")
-        logger.info(f"   text              : '{request.text[:80] if request.text else '(empty)'}'")
-        logger.info(f"   audio_file_path   : '{request.audio_file_path}'")
-        logger.info(f"   audio_language    : '{request.audio_language}'")
-        logger.info("=" * 80)
-        
         # Must have at least text OR an audio file
         if not request.text.strip() and not request.audio_file_path.strip():
             raise HTTPException(status_code=400, detail="Provide either 'text' (symptoms) or 'audio_file_path' (audio file for Speech-to-Text)")
@@ -616,7 +601,6 @@ async def triage_simple(request: TriageRequest, background_tasks: BackgroundTask
         logger.info(f"[TRIAGE] STEP 2 — Writing to `patient_queue` collection...")
         queue_id = queue_manager.add_patient_to_queue(
             patient_card={
-                "name":                request.name,  # ← ADD PATIENT NAME
                 "chief_complaint":     patient_info.get("chief_complaint"),
                 "symptoms":            symptoms,
                 "triage_color":        patient_info.get("triage_color"),

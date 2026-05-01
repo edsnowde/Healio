@@ -1,0 +1,50 @@
+# .gcloudignore — controls what gcloud run deploy --source . uploads to Cloud Build
+# This is the Cloud Build equivalent of .dockerignore
+# Without this, the entire local venv (Windows Python 3.14 site-packages) gets uploaded
+# which breaks the Linux Python 3.11 container build.
+
+# ── Virtual environments (CRITICAL — must exclude these) ───────────────────────
+venv/
+.venv/
+env/
+Env/
+
+# ── Python cache ───────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ── Local credentials — Cloud Run uses ADC / Workload Identity ─────────────────
+credentials.json
+service-account.json
+*.json.key
+.env
+.env.*
+
+# ── Test & development files — not needed in production ───────────────────────
+test_*.py
+test_rash.png
+test_rash_real.png
+test_audio.m4a
+
+# ── Local dev session artifacts ────────────────────────────────────────────────
+uploads/
+
+# ── IDE / OS junk ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# ── Git ────────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── Windows-only setup scripts ─────────────────────────────────────────────────
+setup_phase1.bat
+setup_phase1.ps1
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
+*.log

@@ -134,7 +134,7 @@ function coerceField(field: FieldName, raw: string): PatientFormData[FieldName] 
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function KannadaIntake({ onSubmit }: PatientFormProps) {
+export default function KannadaIntake() {
   const [formData, setFormData] = useState<PatientFormData>({
     name: '', age: 0, gender: '', phone: '', symptoms: '',
   })
@@ -288,7 +288,8 @@ export default function KannadaIntake({ onSubmit }: PatientFormProps) {
     if (!validateForm()) return
     setIsLoading(true)
     setTimeout(() => {
-      onSubmit?.(formData)
+      // Form data ready - can be used for API call or navigation
+      sessionStorage.setItem('patientFormDataKn', JSON.stringify(formData))
       setIsLoading(false)
     }, 1500)
   }

@@ -63,6 +63,20 @@ class OutbreakSurveillance:
             "day", "days", "week", "weeks", "month",
             "mild", "moderate", "severe",   # captured by severity_category separately
         }
+
+        # PHC locations in Bengaluru (latitude, longitude)
+        self.phc_locations = {
+            "PHC-Bengaluru": (13.0827, 80.2707),  # Default: Bengaluru center
+            "PHC-Whitefield": (13.0626, 77.7425),
+            "PHC-Koramangala": (12.9352, 77.6245),
+            "PHC-Indiranagar": (13.0357, 77.6412),
+            "PHC-Yelahanka": (13.0978, 77.5974),
+            "PHC-Jayanagar": (12.9352, 77.5949),
+            "PHC-Bellandur": (12.9596, 77.6394),
+            "PHC-Marathahalli": (12.9691, 77.7499),
+            "PHC-Sarjapur": (12.8981, 77.7537),
+            "PHC-Ramamurthy": (13.1939, 77.7064),
+        }
     
     def record_surveillance_data(self, surveillance_payload: dict) -> str:
         """
@@ -201,6 +215,10 @@ class OutbreakSurveillance:
             Success boolean
         """
         try:
+            # Get default location (Bengaluru center) with coordinates
+            location_name = "PHC-Bengaluru"
+            lat, lng = self.phc_locations.get(location_name, (13.0827, 80.2707))
+            
             alert = {
                 "timestamp": datetime.now().isoformat(),
                 "alert_type": "outbreak_cluster",
@@ -211,6 +229,10 @@ class OutbreakSurveillance:
                 "time_window_hours": self.time_window_hours,
                 "status": "pending_verification",
                 "action_required": patient_count >= 5,  # Auto-escalate if 5+ cases
+                # ← NEW: Location with coordinates
+                "location": location_name,
+                "latitude": lat,
+                "longitude": lng,
             }
             
             doc_ref = self.db.collection(self.cluster_collection).add(alert)
