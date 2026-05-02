@@ -18,7 +18,7 @@ from datetime import datetime
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from fastapi import FastAPI, WebSocket, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import FastAPI, WebSocket, UploadFile, File, HTTPException, BackgroundTasks, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -213,7 +213,7 @@ async def analyze_patient(
 @app.post("/analyze/with-audio", tags=["Triage"])
 async def analyze_with_audio(
     audio_file: UploadFile = File(...),
-    language: str = "kannada",
+    language: str = Form("kannada"),
     background_tasks: BackgroundTasks = None
 ):
     """
@@ -319,8 +319,8 @@ async def analyze_with_audio(
 
 @app.post("/analyze/with-multimodal", tags=["Triage"])
 async def analyze_with_multimodal(
-    text_input: Optional[str] = None,
-    name: Optional[str] = None,  # ← ADD NAME PARAMETER
+    text_input: Optional[str] = Form(None),
+    name: Optional[str] = Form(None),
     images: Optional[List[UploadFile]] = File(None),
     videos: Optional[List[UploadFile]] = File(None),
     background_tasks: BackgroundTasks = None
