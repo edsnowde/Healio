@@ -11,6 +11,8 @@
 
 ---
 
+More details in README_fuz.md
+
 ## 🎯 **THE PROBLEM WE'RE SOLVING**
 
 ### **India's Healthcare Crisis at the Frontline**
