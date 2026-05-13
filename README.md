@@ -8,7 +8,36 @@
 
 ---
 
-## 📅 LATEST DEPLOYMENT UPDATE (May 1, 2026)
+## � **NEW: INFRASTRUCTURE GUIDE FOR BEGINNERS** 🎓
+
+**If you're new to DevOps, deployment, or infrastructure automation, READ THIS FIRST:**
+
+📖 **File:** [`INFRASTRUCTURE_GUIDE_FOR_BEGINNERS.md`](./INFRASTRUCTURE_GUIDE_FOR_BEGINNERS.md)
+
+**What it covers:**
+- ✅ What I created (Bash scripts, Terraform, Monitoring)
+- ✅ Why I created each (problems solved)
+- ✅ Simple explanations with analogies
+- ✅ Step-by-step usage instructions
+- ✅ Beginner Q&A (10 common questions)
+- ✅ Before/After comparison
+- ✅ Complete roadmap for next steps
+
+**Read this if you:**
+- Are new to cloud deployment
+- Want to understand the infrastructure
+- Need to deploy services yourself
+- Want to learn DevOps concepts
+- Are curious how everything works
+
+**TL;DR:** 3 new tools created to automate deployment:
+1. **Bash Scripts** (`scripts/`) - One-command deployment
+2. **Terraform** (`terraform/`) - Infrastructure-as-code (blueprints)
+3. **Monitoring** (`monitoring/`) - 24/7 health checks & alerts
+
+---
+
+## �📅 LATEST DEPLOYMENT UPDATE (May 1, 2026)
 
 ### 🎉 **PRODUCTION STATUS: LIVE & OPERATIONAL**
 
