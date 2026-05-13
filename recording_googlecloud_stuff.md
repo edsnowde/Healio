@@ -115,3 +115,117 @@ Open these in tabs before recording:
 3. Firestore: `https://console.cloud.google.com/firestore?project=healio-494416`
 
 **Done!** ✅
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------
+------------------------------------------------------------
+------------------------------------------
+
+
+
+Let me check **ALL** the Google Cloud services you're actually using:   
+
+Searched for regex `google|cloud|gcs|bucket|secret|logging|monitoring|storage` (`**/backend/**/*.py`), 30 results
+
+Read [](file:///c%3A/Users/User/Desktop/activities_ABULANCE/Build%20For%20Bengaluru%20Hackathon_Reva%20university_roactract/Healio/backend/requirements.txt)
+
+Read [](file:///c%3A/Users/User/Desktop/activities_ABULANCE/Build%20For%20Bengaluru%20Hackathon_Reva%20university_roactract/Healio/backend/Dockerfile)
+
+Read [](file:///c%3A/Users/User/Desktop/activities_ABULANCE/Build%20For%20Bengaluru%20Hackathon_Reva%20university_roactract/Healio/backend/api/file_handler.py#1-1), lines 1 to 60
+
+Perfect question! 🎯 Here's **COMPLETE list of what you're using**:
+
+---
+
+## ✅ **GOOGLE CLOUD SERVICES YOU'RE USING:**
+
+| Service | Used | Why |
+|---------|------|-----|
+| **Cloud Run** | ✅ YES | Frontend + Backend deployment (serverless) |
+| **Firestore** | ✅ YES | Real-time database (patients, queue, surveillance) |
+| **Vertex AI** | ✅ YES | Gemini 2.5 Flash (3-agent pipeline) |
+| **Speech-to-Text** | ✅ YES | Audio transcription (Kannada/Hindi/English) |
+| **Google Maps API** | ✅ YES | Outbreak cluster visualization on map |
+| **Cloud Build** | ✅ YES | Auto-deployment from GitHub (CI/CD) |
+| **Container Registry** | ✅ YES | Docker images stored by Cloud Build |
+| **Cloud Logging** | ✅ YES | Automatic log capture (visible in Cloud Run console) |
+| **IAM (Service Account)** | ✅ YES | Authentication & permissions (Vertex AI user, Datastore user) |
+| **Application Default Credentials** | ✅ YES | Auth mechanism (google-auth library) |
+
+---
+
+## ❌ **NOT USING (but could):**
+
+- Cloud Storage (using ephemeral local `/uploads` in container instead)
+- Cloud SQL (Firestore instead)
+- Pub/Sub (direct API calls instead)
+- Cloud Functions (already using Cloud Run)
+- Secrets Manager (no secrets stored yet)
+- Cloud Tasks/Scheduler
+- BigQuery/Dataflow
+
+---
+
+## 📊 **YOUR TECH STACK SUMMARY:**
+
+**Frontend Stack:**
+- Next.js 14 (React) → Cloud Run
+- Google Maps API
+- Firestore listeners (real-time)
+
+**Backend Stack:**
+- FastAPI → Cloud Run
+- Vertex AI Gemini 2.5 Flash (3 agents)
+- Cloud Speech-to-Text
+- Firebase Admin SDK + Firestore
+- Python 3.11
+
+**Infrastructure:**
+- Cloud Build (GitHub → Docker → Cloud Run)
+- Cloud Run (fully managed serverless)
+- Firestore (NoSQL real-time database)
+- Cloud Logging (automatic)
+
+---
+
+## 🎬 **FOR YOUR VIDEO - SHOW ALL THESE:**
+
+When recording, mention:
+```
+"Healio uses 10+ Google Cloud services:
+✓ Cloud Run for deployment
+✓ Firestore for data
+✓ Vertex AI with Gemini for intelligence
+✓ Speech-to-Text for voice input
+✓ Google Maps for outbreak tracking
+✓ Cloud Build for CI/CD
++ Cloud Logging, IAM, Container Registry, and more"
+```
+
+**That's impressive for a hackathon!** 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

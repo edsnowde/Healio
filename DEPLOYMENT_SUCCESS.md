@@ -4,6 +4,19 @@
 
 Both **backend** and **frontend** services are now successfully deployed to Google Cloud Run and serving live traffic.
 
+gcloud run deploy healio-backend `
+>>   --source . `
+>>   --project healio-494416 `
+>>   --region us-central1 `
+>>   --platform managed `
+>>   --allow-unauthenticated `
+>>   --memory 2Gi `
+>>   --cpu 2 `
+>>   --timeout 300 `
+>>   --port 8080 `
+>>   --set-env-vars GOOGLE_CLOUD_PROJECT=healio-494416
+
+
 ---
 
 ## 🎯 DEPLOYMENT STATUS
