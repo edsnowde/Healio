@@ -199,6 +199,146 @@ gcloud projects add-iam-policy-binding healio-494416 \
 gcloud run services list --region us-central1
 ```
 
+---
+
+## 🔧 **INFRASTRUCTURE-AS-CODE & AUTOMATION (May 13, 2026)**
+
+### ✅ **GAP 1: Linux/Bash Deployment Scripts**
+
+Automated shell scripts for reproducible cloud deployments.
+
+**Location:** `scripts/`
+
+**Files Created:**
+- ✅ `deploy_backend.sh` — Deploy FastAPI backend to Cloud Run
+- ✅ `deploy_frontend.sh` — Build & deploy Next.js frontend
+- ✅ `setup_iam.sh` — Configure IAM roles & enable APIs
+- ✅ `full_deployment.sh` — Complete 3-step deployment pipeline
+- ✅ `README.md` — Comprehensive script documentation
+
+**Capabilities:**
+```bash
+# One-command full deployment
+./scripts/full_deployment.sh
+
+# Individual component deployments
+./scripts/deploy_backend.sh
+./scripts/deploy_frontend.sh
+
+# IAM configuration
+./scripts/setup_iam.sh
+```
+
+**Features:**
+- Environment variables parameterized for easy customization
+- Error handling with `set -e` (fail fast on errors)
+- Informative logging with emojis and progress indicators
+- Auto-detects service URLs and confirms deployment
+- Enables all required Google Cloud APIs automatically
+
+---
+
+### ✅ **GAP 2: Terraform Infrastructure-as-Code**
+
+Production-grade IaC for complete Healio cloud infrastructure.
+
+**Location:** `terraform/`
+
+**Files Created:**
+- ✅ `main.tf` — Cloud Run services, service accounts, IAM bindings, APIs, Firestore
+- ✅ `variables.tf` — Input variables with defaults and descriptions
+- ✅ `outputs.tf` — Exported values (service URLs, emails, database info)
+- ✅ `terraform.tfvars` — Your configuration values (project ID, regions, etc)
+- ✅ `README.md` — Terraform documentation & best practices
+
+**Manages:**
+- ✅ Cloud Run backend service (2GB/2CPU, 300s timeout)
+- ✅ Cloud Run frontend service (512MB/1CPU)
+- ✅ Dedicated service accounts per service
+- ✅ IAM role bindings (Vertex AI, Firestore, Speech-to-Text)
+- ✅ Firestore database & indexes for optimization
+- ✅ Google Cloud API enablement (10+ APIs)
+- ✅ Auto-scaling configuration
+
+**Usage:**
+```bash
+cd terraform
+
+# Initialize Terraform
+terraform init
+
+# Plan deployment (shows what will be created)
+terraform plan
+
+# Apply infrastructure
+terraform apply
+
+# View outputs
+terraform output
+
+# Destroy when done
+terraform destroy
+```
+
+**Infrastructure Diagram:**
+```
+Terraform (IaC)
+  ├── Cloud Run Backend (FastAPI + Gemini)
+  ├── Cloud Run Frontend (Next.js + React)
+  ├── Service Accounts (dedicated per service)
+  ├── IAM Roles (Vertex AI, Firestore, Speech-to-Text)
+  ├── Firestore Database (patient, queue, surveillance collections)
+  ├── Firestore Indexes (query optimization)
+  └── Google Cloud APIs (enablement & management)
+```
+
+---
+
+### ✅ **GAP 3: Cloud Monitoring & Alerting**
+
+Production monitoring for service health, uptime, and error detection.
+
+**Location:** `monitoring/`
+
+**Files Created:**
+- ✅ `setup_uptime_checks.sh` — Create health endpoint monitoring
+- ✅ `setup_log_alerts.sh` — Configure error-based alerts
+- ✅ `setup_all_monitoring.sh` — Orchestrate complete monitoring setup
+- ✅ `README.md` — Monitoring documentation & best practices
+
+**Monitoring Coverage:**
+
+**Uptime Checks:**
+- Backend health endpoint: `/health`
+- Frontend availability: main page load
+- Multi-region checks (USA, Europe, Asia-Pacific)
+- 60-second check interval
+- Alert if unreachable for 2+ consecutive checks
+
+**Log-Based Alerts:**
+- Backend ERROR logs → Email notification
+- Frontend ERROR logs → Email notification  
+- Auto-close alerts after 30 minutes normal operation
+- Configurable alert severity & duration
+
+**Usage:**
+```bash
+# Full monitoring setup with email alerts
+./monitoring/setup_all_monitoring.sh admin@example.com
+
+# Individual components
+./monitoring/setup_uptime_checks.sh
+./monitoring/setup_log_alerts.sh admin@example.com
+```
+
+**View Monitoring:**
+- Cloud Monitoring Console: https://console.cloud.google.com/monitoring
+- Cloud Logging Console: https://console.cloud.google.com/logs
+- Uptime Checks: https://console.cloud.google.com/monitoring/uptime
+- Alert Policies: https://console.cloud.google.com/monitoring/alerting/policies
+
+---
+
 ### 📊 **DEPLOYMENT METRICS**
 
 | Metric | Value |
